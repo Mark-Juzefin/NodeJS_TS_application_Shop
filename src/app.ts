@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { Casheir } from './models';
+import { baseCasheir, Casheir } from './models';
 
 const express = require('express');
 const db = require('./db.ts');
@@ -25,7 +25,7 @@ app.get('/casheir', async (req: Request, res: Response) => {
 app.post('/casheir', async (req: Request, res: Response) => {
   const {
     firstname, lastname, age, shiftid, yearsofexperience, shopid,
-  }: Casheir = req.body;
+  }: baseCasheir = req.body;
 
   if (!firstname && !lastname && !age && !shiftid && !yearsofexperience && !shopid) {
     res.status(400).send('invalid input data');
@@ -39,8 +39,48 @@ app.post('/casheir', async (req: Request, res: Response) => {
 
     res.json(casheir.rows);
   } catch (error) {
+    res.status(400).send(error);
+  }
+});
+
+// updateCasheir
+app.put('/casheir', async (req: Request, res: Response) => {
+  const {
+    id, firstname, lastname, age, shiftid, yearsofexperience, shopid,
+  }: Casheir = req.body;
+  console.log(id, firstname, lastname, age, shiftid, yearsofexperience, shopid);
+
+  if (!id && !firstname && !lastname && !age && !shiftid && !yearsofexperience && !shopid) {
     res.status(400).send('invalid input data');
   }
+
+  try {
+    const casheir = await db.query(`
+  update casheir 
+  set
+  firstname = '${firstname}',
+  lastname = '${lastname}',
+  age = ${age},
+  shiftid = ${shiftid},
+  yearsofexperience = ${yearsofexperience},
+  shopid = ${shopid}
+  where id = ${id}
+  returning *`);
+
+    res.json(casheir.rows);
+  } catch (error) {
+    res.status(400).send(error);
+  }
+});
+
+// DeleteCasheirs
+app.delete('/casheir/:id', async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const casheir = await db.query(
+    `delete from casheir where id = ${id}`,
+  );
+
+  res.json(casheir.rows[0]);
 });
 
 app.listen(PORT, () => {

@@ -74,9 +74,51 @@ app.post('/casheir', function (req, res) { return __awaiter(void 0, void 0, void
                 return [3 /*break*/, 4];
             case 3:
                 error_1 = _b.sent();
-                res.status(400).send('invalid input data');
+                res.status(400).send(error_1);
                 return [3 /*break*/, 4];
             case 4: return [2 /*return*/];
+        }
+    });
+}); });
+// updateCasheir
+app.put('/casheir', function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
+    var _a, id, firstname, lastname, age, shiftid, yearsofexperience, shopid, casheir, error_2;
+    return __generator(this, function (_b) {
+        switch (_b.label) {
+            case 0:
+                _a = req.body, id = _a.id, firstname = _a.firstname, lastname = _a.lastname, age = _a.age, shiftid = _a.shiftid, yearsofexperience = _a.yearsofexperience, shopid = _a.shopid;
+                console.log(id, firstname, lastname, age, shiftid, yearsofexperience, shopid);
+                if (!id && !firstname && !lastname && !age && !shiftid && !yearsofexperience && !shopid) {
+                    res.status(400).send('invalid input data');
+                }
+                _b.label = 1;
+            case 1:
+                _b.trys.push([1, 3, , 4]);
+                return [4 /*yield*/, db.query("\n  update casheir \n  set\n  firstname = '" + firstname + "',\n  lastname = '" + lastname + "',\n  age = " + age + ",\n  shiftid = " + shiftid + ",\n  yearsofexperience = " + yearsofexperience + ",\n  shopid = " + shopid + "\n  where id = " + id + "\n  returning *")];
+            case 2:
+                casheir = _b.sent();
+                res.json(casheir.rows);
+                return [3 /*break*/, 4];
+            case 3:
+                error_2 = _b.sent();
+                res.status(400).send(error_2);
+                return [3 /*break*/, 4];
+            case 4: return [2 /*return*/];
+        }
+    });
+}); });
+// DeleteCasheirs
+app.delete('/casheir/:id', function (req, res) { return __awaiter(void 0, void 0, void 0, function () {
+    var id, casheir;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0:
+                id = req.params.id;
+                return [4 /*yield*/, db.query("delete from casheir where id = " + id)];
+            case 1:
+                casheir = _a.sent();
+                res.json(casheir.rows[0]);
+                return [2 /*return*/];
         }
     });
 }); });
