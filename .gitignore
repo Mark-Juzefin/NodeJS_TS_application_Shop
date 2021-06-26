@@ -1,1 +1,8 @@
 /node_modules/*
+/sql_query/*
+/dist/*
+/.vscode/*
+dist/app.js
+src/casheir.router.ts
+src/casheir.controller.ts
+dist/app.js
