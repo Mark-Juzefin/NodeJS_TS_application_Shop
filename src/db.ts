@@ -8,4 +8,15 @@ const pool = new Pool({
   database: 'Shop',
 });
 
-module.exports = pool;
+module.exports.db = pool;
+
+// create a Sequelize instance
+
+const { Sequelize } = require('sequelize');
+
+const sequelize = new Sequelize('Shop', 'postgres', '123654', {
+  host: 'localhost',
+  dialect: 'postgres',
+});
+
+module.exports.sequelize = sequelize;

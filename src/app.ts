@@ -1,8 +1,11 @@
 import { Request, Response } from 'express';
-import { baseCasheir, Casheir } from './models';
+import { baseCasheir, CasheirInterface } from './models';
 
 const express = require('express');
-const db = require('./db.ts');
+const { Casheir, Shift, Shop } = require('./models');
+
+const { db } = require('./db.ts');
+const { sequelize } = require('./db.ts');
 
 const PORT = process.env.PORT || 8088;
 const app = express();
@@ -11,33 +14,40 @@ app.use(express.json());
 
 // getAllCasheirs
 app.get('/casheir', async (req: Request, res: Response) => {
-  const casheir = await db.query(
-    `select casheir.firstname, casheir.lastname, casheir.age, shift.shiftname, casheir.yearsofexperience, shop.shopname
-    from casheir
-    left join shift on casheir.shiftid = shift.id
-    left join shop on casheir.shopid = shop.id`,
-  );
+  const casheirs = await Casheir.findAll({
+    attributes: ['firstName', 'lastName', 'age', 'shift.shiftName', 'yearsOfExperience', 'shop.shopName'],
+    include: [{
+      model: Shop,
+      attributes: ['shopName'],
+    }, {
+      model: Shift,
+      attributes: ['shiftName'],
+    }],
+  });
 
-  res.json(casheir.rows);
+  res.json(casheirs);
 });
 
 // addNewCasheir
 app.post('/casheir', async (req: Request, res: Response) => {
   const {
-    firstname, lastname, age, shiftid, yearsofexperience, shopid,
+    firstName, lastName, age, shiftId, yearsOfExperience, shopId,
   }: baseCasheir = req.body;
 
-  if (!firstname && !lastname && !age && !shiftid && !yearsofexperience && !shopid) {
+  if (!firstName && !lastName && !age && !shiftId && !yearsOfExperience && !shopId) {
     res.status(400).send('invalid input data');
   }
   try {
-    const casheir = await db.query(`
-  insert into casheir (firstname, lastname, age, shiftid, yearsofexperience, shopid)
-  values 
-  ('${firstname}', '${lastname}', ${age}, ${shiftid}, ${yearsofexperience}, ${shopid})
-  returning id`);
+    const casheir = await Casheir.create({
+      firstName,
+      lastName,
+      age,
+      shiftId,
+      shopId,
+      yearsOfExperience,
+    });
 
-    res.json(casheir.rows);
+    res.json(casheir);
   } catch (error) {
     res.status(400).send(error);
   }
@@ -46,28 +56,28 @@ app.post('/casheir', async (req: Request, res: Response) => {
 // updateCasheir
 app.put('/casheir', async (req: Request, res: Response) => {
   const {
-    id, firstname, lastname, age, shiftid, yearsofexperience, shopid,
-  }: Casheir = req.body;
-  console.log(id, firstname, lastname, age, shiftid, yearsofexperience, shopid);
+    id, firstName, lastName, age, shiftId, yearsOfExperience, shopId,
+  }: CasheirInterface = req.body;
 
-  if (!id && !firstname && !lastname && !age && !shiftid && !yearsofexperience && !shopid) {
+  if (!id && !firstName && !lastName && !age && !shiftId && !yearsOfExperience && !shopId) {
     res.status(400).send('invalid input data');
   }
 
   try {
-    const casheir = await db.query(`
-  update casheir 
-  set
-  firstname = '${firstname}',
-  lastname = '${lastname}',
-  age = ${age},
-  shiftid = ${shiftid},
-  yearsofexperience = ${yearsofexperience},
-  shopid = ${shopid}
-  where id = ${id}
-  returning *`);
+    const [numberOfAffectedRows, affectedRows] = await Casheir.update({
+      firstName,
+      lastName,
+      age,
+      shiftId,
+      shopId,
+      yearsOfExperience,
+    }, {
+      where: { id },
+      returning: true, // needed for affectedRows to be populated
+      plain: true, // makes sure that the returned instances are just plain objects
+    });
 
-    res.json(casheir.rows);
+    res.json({ numberOfAffectedRows, affectedRows });
   } catch (error) {
     res.status(400).send(error);
   }
@@ -75,14 +85,23 @@ app.put('/casheir', async (req: Request, res: Response) => {
 
 // DeleteCasheirs
 app.delete('/casheir/:id', async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const casheir = await db.query(
-    `delete from casheir where id = ${id}`,
-  );
-
-  res.json(casheir.rows[0]);
+  try {
+    const { id } = req.params;
+    const numAffectedRows = await Casheir.destroy({
+      where: {
+        id,
+      },
+    });
+    if (numAffectedRows !== 0) {
+      res.json('success');
+    } else {
+      res.status(400).send('this value does not exist');
+    }
+  } catch (error) {
+    res.status(400).send(error);
+  }
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log('Server do work!');
 });
